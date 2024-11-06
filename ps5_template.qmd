@@ -147,6 +147,8 @@ print("Final agency list:", agency)
 
 df["agency"]=agency
 
+print(df.head())
+
 ```
 
 ## Step 2: Making the scraper dynamic
