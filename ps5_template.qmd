@@ -117,7 +117,6 @@ print(df)
 import requests
 from bs4 import BeautifulSoup
 
-# Assuming `my_links` has been populated with the correct URLs
 tag_h = soup.find_all("h2", class_="usa-card__heading")
 
 my_links=[]
@@ -137,19 +136,12 @@ for url in my_links:
     for li in li_tags:
         # Find the `span` with the "Agency:" label
         label_span = li.find("span", class_="padding-right-2 text-base")
-        
-        # Debug: Check if we found the `span` with the correct class
-        if label_span:
-            print("Found span:", label_span.text)  # Check the text content of the `span`
-        
         # Check if it contains the text "Agency:"
         if label_span and "Agency:" in label_span.text:
-            # The agency name should be the next sibling text of the `span`
             agency_text = label_span.next_sibling
             if agency_text:
-                agency_name = agency_text.strip()
-                print("Found agency:", agency_name)  # Debug: print the agency name found
-                agency.append(agency_name)  # Append to the list
+                agency_name = agency_text.strip() #Remove whitespace
+                agency.append(agency_name)  #Append to the list
 
 print("Final agency list:", agency)
 
