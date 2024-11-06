@@ -1,6 +1,6 @@
 ---
 title: "title"
-author: "author"
+author: "Neil Stein and Mitch Bobbin"
 date: "date"
 format: 
   pdf:
