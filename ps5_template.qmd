@@ -225,6 +225,9 @@ def scraper_function():
               # Extract the category text
               scrape_category_text = [li.text.strip() for li in ul.find_all("li")]
               scrape_categories.append(", ".join(category_text))  # Join multiple categories if present
+              # In case of a missing category
+              category = ul.text.strip() if ul else ""  
+              scrape_categories.append(category)
 
         # Create a DataFrame
           scrape_df = pd.DataFrame({
