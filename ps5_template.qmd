@@ -157,12 +157,95 @@ print(df.head())
 
 * a. Pseudo-Code (PARTNER 2)
 
+  - writing a prompt using the input() method as the first step in function
+  - that value is then converted to a datetime object and compared to the 2013 restriction listed. If/else statements should cover for this need
+  - with that input datetime, we can use it as the key value in a for loop that covers every day between that date until today() as the limit. This loop will process (ascending) every full day (yyyy-mm-dd)
+  - 1 second time delay (to avoid being blocked by the site) will be implemented using a 1 second delay with time.sleep()
 
 * b. Create Dynamic Scraper (PARTNER 2)
 
 ```{python}
+import time
+import requests
+from bs4 import BeautifulSoup
+
+def scraper_function():
+  # input date step - confirming correct format
+  date_input = input("Please enter a year & month (format should be [yyyy-mm]): ")
+  try:
+    date_obj = pd.to_datetime(date_input)
+    # return date_obj
+  except ValueError:
+    print("Invalid date format. Please ony use YYYY-MM format.")
+  # checking the date is within given range 
+  cutoff_date = pd.to_datetime("2013-01-01")
+  if date_obj >= cutoff_date:
+    for date_obj in pd.date_range(start= date_obj, end= pd.to_datetime("today")):
+        formatted_date = date_obj.strftime("%Y-%m")
+        page_number = 1
+        while True:
+          # Define the URL
+          scrape_url = "https://oig.hhs.gov/fraud/enforcement/?page={page_number}"
+
+          # Send a GET request to the URL
+          scrape_response = requests.get(scrape_url)
+          # Parse the HTML content with BeautifulSoup
+          scrape_soup = BeautifulSoup(scrape_response.text, "html.parser")
+
+          # Find all h2 tags for enforcement action titles
+          scrape_tag_h = scrape_soup.find_all("h2", class_= "usa-card__heading")
+
+          # Find all span tags for dates
+          scrape_span_dates = scrape_soup.find_all("span", class_= "text-base-dark padding-right-105")
+
+          # Find all ul tags for categories
+          scrape_ul_categories = scrape_soup.find_all("ul", class_="display-inline add-list-reset")
+
+          # Extract text and hyperlinks
+          scrape_enforcement = []
+          scrape_dates = []
+          scrape_categories = []
+          scrape_hyperlinks = []
+
+          for h2, span, ul in zip(scrape_tag_h, scrape_span_dates, scrape_ul_categories):
+              # Extract the hyperlink and text from h2
+              a_tag = h2.find("a")
+              if a_tag:
+                  enforcement.append(a_tag.text.strip())
+                  hyperlinks.append(a_tag['href'])  # Extract the hyperlink
+              
+              # Extract the date
+              scrape_dates.append(span.text.strip())
+              
+              # checking that our date is still within range
+              latest_date = pd.to_datetime(scrape_dates[-1])
+              if latest_date <= date_obj:
+                break
+
+              # Extract the category text
+              scrape_category_text = [li.text.strip() for li in ul.find_all("li")]
+              scrape_categories.append(", ".join(category_text))  # Join multiple categories if present
+
+        # Create a DataFrame
+          scrape_df = pd.DataFrame({
+              "Title of Enforcement Action": scrape_enforcement,
+              "Date": scrape_dates,
+              "Category": scrape_categories,
+              "Hyperlink": scrape_hyperlinks,
+        })
+    # Implementing a 1 second delay
+    page_number += 1
+    time.sleep(1)
+  else:
+    print("Please enter a date after the cutoff date:", cutoff_date.strftime("%Y-%m"))
+  scrape_df.to_csv("scraped_data.csv", index= False)
+
+# Call the scraper function
+scraper_function()
 
 ```
+
+
 
 * c. Test Partner's Code (PARTNER 1)
 
