@@ -175,6 +175,7 @@ print(df.head())
 ```{python}
 import time
 import requests
+import pandas as pd
 from bs4 import BeautifulSoup
 
 def scraper_function():
@@ -261,8 +262,13 @@ scraper_function()
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
-scraper_function
+
+print(scraped_data_df.iloc[-1])
 ```
+
+We have 3,022 actions in our final df. Note that this can change by the time we submit the assignment, as the site is updated regularly and I am writing this answer on 11/8/24.
+
+Date of earliest scraped enforcement action: Jan 4th, 2021. The title of the action was The United States And Tennessee Resolve Claims With Three Providers For False Claims Act Liability Relating To ‘P-Stim’ Devices For A Total Of $1.72 Million. It was in the Criminal and Civil Actions Category. The URL is https://oig.hhs.gov/fraud/enforcement/the-united-states-and-tennessee-resolve-claims-with-three-providers-for-false-claims-act-liability-relating-to-p-stim-devices-for-a-total-of-172-million/
 
 ## Step 3: Plot data based on scraped data
 
@@ -277,13 +283,41 @@ scraper_function
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
+import altair as alt
+#Create a chart that uses different shapes for "Criminal & Civil"
+#and the State Enforcement Agency. Then use a str detect to #further classify based upon the title of the enforcement action.
 
+alt.Chart(scraped_data_df).transform_filter(
+        (alt.datum.Category == "State Enforcement Agencies") | 
+        (alt.datum.Category == "Criminal and Civil Actions")).mark_line().encode(
+  alt.X("yearmonth(Date):T"),
+  alt.Y("count()"),
+  color=("Category")
+)
 ```
 
 * based on five topics
 
 ```{python}
-
+alt.Chart(scraped_data_df).transform_filter(alt.datum.Category == ("Criminal and Civil Actions")).transform_calculate(
+           Fraud_Type = alt.expr.if_(
+            alt.datum["Title of Enforcement Action"].match(r"(?i)\b(finance|bank)\b"), "Financial Fraud",
+            alt.expr.if_(
+                alt.datum["Title of Enforcement Action"].match(r"(?i)\b(health|healthcare)\b"), "Health Care Fraud",
+                alt.expr.if_(
+                    alt.datum["Title of Enforcement Action"].match(r"(?i)\b(drug|prescription)\b"), "Drug Enforcement",
+                    alt.expr.if_(
+                        alt.datum["Title of Enforcement Action"].match(r"(?i)\b(bribery|payment)\b"), "Bribery",
+                        "Other"
+                    )
+                )
+            )
+        )
+    ).mark_line().encode(
+  alt.X("yearmonth(Date):T"),
+  alt.Y("count()"),
+  color=("Fraud_Type")
+)
 ```
 
 ## Step 4: Create maps of enforcement activity
