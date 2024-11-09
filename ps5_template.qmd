@@ -151,7 +151,6 @@ for url in my_links:
         # Append "NA" if no "Agency:" label was found in any `li` tag
         agency.append("NA")
 
-print("Final agency list:", agency)
 
 df["agency"]=agency
 
@@ -318,8 +317,6 @@ def assign_topic(title):
 
 crim_civil_df["Topic"] = crim_civil_df["Title of Enforcement Action"].apply(assign_topic)
 
-# Display the resulting DataFrame
-print(crim_civil_df[["Title of Enforcement Action", "Topic"]])
 
 alt.Chart(crim_civil_df).mark_line().encode(
   alt.X("yearmonth(Date):T"),
@@ -334,6 +331,41 @@ alt.Chart(crim_civil_df).mark_line().encode(
 ### 1. Map by State (PARTNER 1)
 
 ```{python}
+#apply the for loop to extract each rows agency:
+agency = []
+
+for url in scraped_data_df["Hyperlink"]:
+    response = requests.get(url)
+    page_soup = BeautifulSoup(response.text, "html.parser")
+    li_tags = page_soup.find_all("li")
+    found_agency=False
+    for li in li_tags:
+        # Find the `span` with the "Agency:" label
+        label_span = li.find("span", class_="padding-right-2 text-base")
+        # Check if it contains the text "Agency:"
+        if label_span and "Agency:" in label_span.text:
+            agency_text = label_span.next_sibling
+            if agency_text:
+                agency_name = agency_text.strip() #Remove whitespace
+                agency.append(agency_name)  #Append to the list
+            else:
+                agency.append("NA")  # Append "NA" if agency name is missing
+            found_agency = True
+            break  # Stop checking other `li` tags if agency is found
+
+    if not found_agency:
+        # Append "NA" if no "Agency:" label was found in any `li` tag
+        agency.append("NA")
+
+
+scraped_data_df["agency"]=agency
+
+print(df.head())
+
+import geopandas as gpd
+#First filter the overall df to include only state actions:
+
+states_actions_df=scraped_data_df[scraped_data_df["Category"]=="State Enforcement Agencies"]
 
 ```
 
