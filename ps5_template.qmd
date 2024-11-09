@@ -132,7 +132,7 @@ for url in my_links:
     response = requests.get(url)
     page_soup = BeautifulSoup(response.text, "html.parser")
     li_tags = page_soup.find_all("li")
-    
+    found_agency=False
     for li in li_tags:
         # Find the `span` with the "Agency:" label
         label_span = li.find("span", class_="padding-right-2 text-base")
@@ -142,6 +142,14 @@ for url in my_links:
             if agency_text:
                 agency_name = agency_text.strip() #Remove whitespace
                 agency.append(agency_name)  #Append to the list
+            else:
+                agency.append("NA")  # Append "NA" if agency name is missing
+            found_agency = True
+            break  # Stop checking other `li` tags if agency is found
+
+    if not found_agency:
+        # Append "NA" if no "Agency:" label was found in any `li` tag
+        agency.append("NA")
 
 print("Final agency list:", agency)
 
@@ -253,7 +261,7 @@ scraper_function()
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
-
+scraper_function
 ```
 
 ## Step 3: Plot data based on scraped data
