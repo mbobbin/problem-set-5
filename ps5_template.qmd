@@ -173,96 +173,96 @@ print(df.head())
 * b. Create Dynamic Scraper (PARTNER 2)
 
 ```{python}
-import time
-import requests
 import pandas as pd
+import requests
+import time
 from bs4 import BeautifulSoup
 
 def scraper_function():
-  # input date step - confirming correct format
-  date_input = input("Please enter a year & month (format should be [yyyy-mm]): ")
-  try:
-    date_obj = pd.to_datetime(date_input)
-    # return date_obj
-  except ValueError:
-    print("Invalid date format. Please ony use YYYY-MM format.")
-  # checking the date is within given range 
-  cutoff_date = pd.to_datetime("2013-01-01")
-  if date_obj >= cutoff_date:
-    for date_obj in pd.date_range(start= date_obj, end= pd.to_datetime("today")):
-        formatted_date = date_obj.strftime("%Y-%m")
+    # Input date step - confirming correct format
+    date_input = input("Please enter a year & month (format should be [yyyy-mm]): ")
+    try:
+        date_obj = pd.to_datetime(date_input)
+    except ValueError:
+        print("Invalid date format. Please use YYYY-MM format.")
+        return  # Exit the function if the date format is invalid
+    
+    # Checking the date is within the given range 
+    cutoff_date = pd.to_datetime("2013-01-01")
+    if date_obj < cutoff_date:
+        print("Please enter a date after the cutoff date:", cutoff_date.strftime("%Y-%m"))
+        return  # Exit if the date is before the cutoff
+    
+    # Loop over each month from the input date to the current date
+    all_data = []  # Collect data for all months and pages
+    for month_date in pd.date_range(start=date_obj, end=pd.to_datetime("today"), freq='MS'):
+        formatted_date = month_date.strftime("%Y-%m")
         page_number = 1
+        print(f"Scraping data for {formatted_date}...")
+
         while True:
-          # Define the URL
-          scrape_url = "https://oig.hhs.gov/fraud/enforcement/?page={page_number}"
+            # Define the URL with page number
+            scrape_url = f"https://oig.hhs.gov/fraud/enforcement/?page={page_number}"
+            scrape_response = requests.get(scrape_url)
 
-          # Send a GET request to the URL
-          scrape_response = requests.get(scrape_url)
-          # Parse the HTML content with BeautifulSoup
-          scrape_soup = BeautifulSoup(scrape_response.text, "html.parser")
+            if scrape_response.status_code != 200:
+                print(f"Error fetching page {page_number} for {formatted_date}. Skipping...")
+                break  # Exit the loop if the page is not found or request fails
 
-          # Find all h2 tags for enforcement action titles
-          scrape_tag_h = scrape_soup.find_all("h2", class_= "usa-card__heading")
+            # Parse the HTML content with BeautifulSoup
+            scrape_soup = BeautifulSoup(scrape_response.text, "html.parser")
 
-          # Find all span tags for dates
-          scrape_span_dates = scrape_soup.find_all("span", class_= "text-base-dark padding-right-105")
+            # Find all required elements
+            scrape_tag_h = scrape_soup.find_all("h2", class_="usa-card__heading")
+            scrape_span_dates = scrape_soup.find_all("span", class_="text-base-dark padding-right-105")
+            scrape_ul_categories = scrape_soup.find_all("ul", class_="display-inline add-list-reset")
 
-          # Find all ul tags for categories
-          scrape_ul_categories = scrape_soup.find_all("ul", class_="display-inline add-list-reset")
-
-          # Extract text and hyperlinks
-          scrape_enforcement = []
-          scrape_dates = []
-          scrape_categories = []
-          scrape_hyperlinks = []
-
-          for h2, span, ul in zip(scrape_tag_h, scrape_span_dates, scrape_ul_categories):
-              # Extract the hyperlink and text from h2
-              a_tag = h2.find("a")
-              if a_tag:
-                  enforcement.append(a_tag.text.strip())
-                  hyperlinks.append(a_tag['href'])  # Extract the hyperlink
-              
-              # Extract the date
-              scrape_dates.append(span.text.strip())
-              
-              # checking that our date is still within range
-              latest_date = pd.to_datetime(scrape_dates[-1])
-              if latest_date <= date_obj:
+            # Break if no data is found on the page
+            if not scrape_tag_h:
                 break
 
-              # Extract the category text
-              scrape_category_text = [li.text.strip() for li in ul.find_all("li")]
-              scrape_categories.append(", ".join(category_text))  # Join multiple categories if present
-              # In case of a missing category
-              category = ul.text.strip() if ul else ""  
-              scrape_categories.append(category)
+            # Extract text and hyperlinks, ensuring each list has a matching entry
+            for h2, span, ul in zip(scrape_tag_h, scrape_span_dates, scrape_ul_categories):
+                # Extract the hyperlink and text from h2
+                title = h2.find("a").text.strip() if h2.find("a") else "N/A"
+                hyperlink = "https://oig.hhs.gov" + h2.find("a")['href'] if h2.find("a") else "N/A"
+                
+                # Extract the date
+                date_text = span.text.strip() if span else "N/A"
+                latest_date = pd.to_datetime(date_text, errors='coerce')
+                
+                # Check if the latest date is within range and stop if it's before the target date
+                if latest_date and latest_date < date_obj:
+                    print("Reached date outside range. Stopping early.")
+                    scrape_df = pd.DataFrame(all_data, columns=["Title of Enforcement Action", "Date", "Category", "Hyperlink"])
+                    scrape_df.to_csv("scraped_data.csv", index=False)
+                    print("Data has been saved to 'scraped_data.csv'.")
+                    return  # Stop the function if date is outside range
+                
+                # Extract the category text
+                category_text = [li.text.strip() for li in ul.find_all("li")] if ul else ["N/A"]
+                categories = ", ".join(category_text)
 
-        # Create a DataFrame
-          scrape_df = pd.DataFrame({
-              "Title of Enforcement Action": scrape_enforcement,
-              "Date": scrape_dates,
-              "Category": scrape_categories,
-              "Hyperlink": scrape_hyperlinks,
-        })
-    # Implementing a 1 second delay
-    page_number += 1
-    time.sleep(1)
-  else:
-    print("Please enter a date after the cutoff date:", cutoff_date.strftime("%Y-%m"))
-  scrape_df.to_csv("scraped_data.csv", index= False)
+                # Append to the all_data list as a tuple
+                all_data.append((title, date_text, categories, hyperlink))
+
+            # Move to the next page and add a delay
+            page_number += 1
+            time.sleep(0.5)  # Reduce delay if possible for faster scraping
+
+    # Save the data at the end of all months
+    scrape_df = pd.DataFrame(all_data, columns=["Title of Enforcement Action", "Date", "Category", "Hyperlink"])
+    scrape_df.to_csv("scraped_data.csv", index=False)
+    print("Data has been saved to 'scraped_data.csv'.")
 
 # Call the scraper function
 scraper_function()
-
 ```
-
-
 
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
-
+scraped_data_df=pd.read_csv("scraped_data.csv")
 print(scraped_data_df.iloc[-1])
 ```
 
