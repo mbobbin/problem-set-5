@@ -299,25 +299,34 @@ alt.Chart(scraped_data_df).transform_filter(
 * based on five topics
 
 ```{python}
-alt.Chart(scraped_data_df).transform_filter(alt.datum.Category == ("Criminal and Civil Actions")).transform_calculate(
-           Fraud_Type = alt.expr.if_(
-            alt.datum["Title of Enforcement Action"].match(r"(?i)\b(finance|bank)\b"), "Financial Fraud",
-            alt.expr.if_(
-                alt.datum["Title of Enforcement Action"].match(r"(?i)\b(health|healthcare)\b"), "Health Care Fraud",
-                alt.expr.if_(
-                    alt.datum["Title of Enforcement Action"].match(r"(?i)\b(drug|prescription)\b"), "Drug Enforcement",
-                    alt.expr.if_(
-                        alt.datum["Title of Enforcement Action"].match(r"(?i)\b(bribery|payment)\b"), "Bribery",
-                        "Other"
-                    )
-                )
-            )
-        )
-    ).mark_line().encode(
+import numpy as np
+crim_civil_df=scraped_data_df[scraped_data_df["Category"]=="Criminal and Civil Actions"]
+
+#Define a function to determine the topic based on keywords
+def assign_topic(title):
+    title = title.lower()
+    if "healthcare" in title or "health care" in title or "medic" in title or "claims" in title:
+        return "Health Care Fraud"
+    elif "bank" in title or "financial" in title:
+        return "Financial Fraud"
+    elif "drug" in title or "distribut" in title:
+        return "Drug Enforcement"
+    elif "bribe" in title or "corruption" in title or "kickback" in title:
+      return "Bribery/Corruption"
+    else:
+        return "Other"
+
+crim_civil_df["Topic"] = crim_civil_df["Title of Enforcement Action"].apply(assign_topic)
+
+# Display the resulting DataFrame
+print(crim_civil_df[["Title of Enforcement Action", "Topic"]])
+
+alt.Chart(crim_civil_df).mark_line().encode(
   alt.X("yearmonth(Date):T"),
   alt.Y("count()"),
-  color=("Fraud_Type")
-)
+  color="Topic"
+).properties(title="Monthly HHS Criminal & Civil Actions, 2021-Present")
+
 ```
 
 ## Step 4: Create maps of enforcement activity
