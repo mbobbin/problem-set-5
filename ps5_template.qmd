@@ -274,7 +274,28 @@ Date of earliest scraped enforcement action: Jan 4th, 2021. The title of the act
 ### 1. Plot the number of enforcement actions over time (PARTNER 2)
 
 ```{python}
+import pandas as pd
+import altair as alt
 
+# filtering towards the prompt's specified date range
+clipping_start_date = pd.to_datetime("2021-01-01")
+clipping_end_date = pd.to_datetime("today")
+scraped_data_df["Date"] = pd.to_datetime(scraped_data_df["Date"])
+
+plotting_enforcement_df = scraped_data_df[(scraped_data_df["Date"] >= clipping_start_date) & (scraped_data_df["Date"] <= clipping_end_date)]
+
+# aggregating over month & year
+grouped_enforcement = plotting_enforcement_df.groupby(pd.Grouper(key= "Date", freq= "M")).size().reset_index(name= "Count")
+
+# line chart plotting
+enforc_chart = alt.Chart(grouped_enforcement).mark_line().encode(
+    x= alt.X("Date:N", title= "Date (month)"),
+    y= alt.Y("Count", title= "Enforcement Actions Count"),
+).properties(
+    title= "Chart of Enforcement Actions Over Time"
+).interactive()
+
+enforc_chart.show()
 ```
 
 ### 2. Plot the number of enforcement actions categorized: (PARTNER 1)
