@@ -289,10 +289,12 @@ grouped_enforcement = plotting_enforcement_df.groupby(pd.Grouper(key= "Date", fr
 
 # line chart plotting
 enforc_chart = alt.Chart(grouped_enforcement).mark_line().encode(
-    x= alt.X("Date:N", title= "Date (month)"),
+    x= alt.X("Date:T", title= "Date (month-year)"),
     y= alt.Y("Count", title= "Enforcement Actions Count"),
 ).properties(
-    title= "Chart of Enforcement Actions Over Time"
+    title= "Chart of Enforcement Actions Over Time",
+    width= 600,
+    height= 400,
 ).interactive()
 
 enforc_chart.show()
@@ -425,6 +427,93 @@ scraped_data_df["agency"] = agency
 ### 2. Map by District (PARTNER 2)
 
 ```{python}
+import pandas as pd
+import re
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+# importing our state shapefile
+us_states = gpd.read_file("cb_2018_us_state_500k.shp")
+
+# processing our agency column into districts (and states) using a Regular Expressions function
+# got the idea from stack overflow - https://stackoverflow.com/questions/55194224/extract-names-from-string-with-python-regex
+
+district_df = scraped_data_df.copy()
+district_df["agency"] = district_df["agency"].astype(str)
+
+
+# empty columns to be filled
+district_df["State"]= ""
+district_df["District"] = ""
+
+# regular expression function
+def state_district_extractor(string):
+  pattern = r"U\.S\. Attorney's Office(?:, (Eastern|Western|Northern|Middle|Central|Southern|District of) )?(.*)"
+
+  match = re.match(pattern, string)
+  # distict name case
+  if match:
+    district = match.group(1) + " " + match.group(2) if match.group(1) else match.group(2)
+    state = match.group(2)
+    return state, district
+
+  # "state of" name case
+  elif "State of" in string or not string.split():
+    state = string.split("State of ")[1].strip()
+    return state, None
+
+  # just state name case
+  elif string.strip():
+    state = string.strip()
+    return state, None
+
+  # multi-agency cases
+  elif "U.S. Department of Justice" in string:
+    state = string.split("District of ")[-1].strip()
+    return state, "N/A"
+
+  elif "U.S. Attorney's Office" in string:
+      remaining_part = string.split("U.S. Attorney's Office, ")[1].strip()
+      parts = remaining_part.split("District of ")
+      state = parts[-1].strip()
+      district = parts[0].strip()
+      return state, district
+
+  # empty cases
+  return "N/A", "N/A"
+
+district_df[["State","District"]] = district_df["agency"].apply(state_district_extractor).apply(pd.Series)
+
+# Correcting for Washington, DC and other exceptions
+district_df.loc[district_df["State"] == "Columbia", "State"] = "Washington, D.C."
+district_df.loc[district_df["State"] == "Columbia", "State"] = "Washington, D.C."
+
+district_df.loc[district_df["District"].isnull() & district_df["agency"].str.contains("U.S. Attorney's Office"), "District"] = district_df["agency"].str.replace("U.S. Attorney's Office, ", '', regex=False)
+# cleanup in case the terminology makes it through
+district_df["State"] = district_df["State"].str.replace("District of ", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("U.S. Attorney’s Office, ", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("Attorney General", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("U.S. Attorney General", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("U.S. Department of Justice and U.S. Attorney's Office, ", "", regex= False)
+# persistant cases of the direction -- specific exceptions for states with directional names
+district_df["State"] = district_df["State"].str.replace("Northern", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("Eastern", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("Southern", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("Western", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("Middle", "", regex= False)
+district_df["State"] = district_df["State"].str.replace("Central", "", regex= False)
+
+# choropleth mapping by district
+district_grouping = district_df.groupby("State").size().reset_index(name= "District_Count")
+merged_df = us_states.merge(district_grouping, left_on= "NAME", right_on= "State", how= "left")
+# per the recommendation in Ed, I will use the Albers USA projection
+merged_df = merged_df.to_crs("ESRI:102003")
+
+# plotting
+merged_df.plot(column= "District_Count", cmap= "OrRd", figsize=(10, 8))
+plt.title("Cases by Districts per State")
+plt.axis("off")
+plt.show()
 
 ```
 
