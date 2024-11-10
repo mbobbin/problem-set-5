@@ -1,7 +1,7 @@
 ---
 title: "30538 Problem Set 5: Web Scraping"
 author: "Neil Stein and Mitch Bobbin"
-date: "Nov. 11"
+date: "Nov. 10"
 format: 
   pdf:
     include-in-header: 
