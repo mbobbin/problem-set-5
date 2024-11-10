@@ -1,7 +1,7 @@
 ---
-title: "title"
+title: "30538 Problem Set 5: Web Scraping"
 author: "Neil Stein and Mitch Bobbin"
-date: "date"
+date: "Nov. 11"
 format: 
   pdf:
     include-in-header: 
@@ -453,9 +453,9 @@ scraped_data_df["agency"] = agency
 
 ```{python}
 import geopandas as gpd
-shp_path = r"C:\\Users\\Mitch\\Documents\\GitHub\\problem-set-5\\cb_2018_us_state_500k.zip"
+import numpy as np
 
-state_geo_data=gpd.read_file(shp_path)
+state_geo_data= gpd.read_file("cb_2018_us_state_500k.shp")
 
 state_actions_df=scraped_data_df[scraped_data_df["Category"]=="State Enforcement Agencies"]
 
@@ -599,7 +599,7 @@ merged_df = merged_df.to_crs("ESRI:102003")
 
 # plotting
 merged_df.plot(column= "District_Count", cmap= "OrRd", figsize=(10, 8))
-plt.title("Cases by Districts per State")
+plt.title("Number of HHS Enforcement Actions by Districts per State")
 plt.axis("off")
 plt.show()
 
