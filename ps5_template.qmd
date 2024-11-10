@@ -332,43 +332,74 @@ alt.Chart(crim_civil_df).mark_line().encode(
 
 ```{python}
 #apply the for loop to extract each rows agency:
+first_30=scraped_data_df.head(50)
+import requests
+from bs4 import BeautifulSoup
+import time
+
+
+
 agency = []
 
 for url in scraped_data_df["Hyperlink"]:
-    response = requests.get(url)
-    page_soup = BeautifulSoup(response.text, "html.parser")
-    li_tags = page_soup.find_all("li")
-    found_agency=False
-    for li in li_tags:
-        # Find the `span` with the "Agency:" label
-        label_span = li.find("span", class_="padding-right-2 text-base")
-        # Check if it contains the text "Agency:"
-        if label_span and "Agency:" in label_span.text:
-            agency_text = label_span.next_sibling
-            if agency_text:
-                agency_name = agency_text.strip() #Remove whitespace
-                agency.append(agency_name)  #Append to the list
-            else:
-                agency.append("NA")  # Append "NA" if agency name is missing
-            found_agency = True
-            break  # Stop checking other `li` tags if agency is found
+    try:
+        # Measure the time taken for each request
+        request_start_time = time.time()
+        
+        # Send a GET request to the URL
+        response = requests.get(url)
+        
+        request_end_time = time.time()
+        print(f"Time taken for request to {url}: {request_end_time - request_start_time} seconds")
 
-    if not found_agency:
-        # Append "NA" if no "Agency:" label was found in any `li` tag
+        # Parse the HTML content
+        page_soup = BeautifulSoup(response.text, "html.parser")
+        ul_tags=page_soup.find_all("ul")
+        
+        for ul in ul_tags:
+          li_tags = ul.find_all("li")
+        found_agency = False
+            for li in li_tags:
+               # Measure time taken to check each `li` tag
+               li_start_time = time.time()
+            
+            # Find the span with the "Agency:" label
+              label_span = li.find("span", class_="padding-right-2 text-base")
+            
+            if label_span and "Agency:" in label_span.text:
+                agency_text = label_span.next_sibling
+                if agency_text:
+                    agency_name = agency_text.strip()  # Remove whitespace
+                    agency.append(agency_name)  # Append to the list
+                else:
+                    agency.append("NA")  # Append "NA" if agency name is missing
+                found_agency = True
+                break  # Stop checking other `li` tags if agency is found
+            
+            li_end_time = time.time()
+            print(f"Time taken to check an `li` tag: {li_end_time - li_start_time} seconds")
+
+        if not found_agency:
+            # Append "NA" if no "Agency:" label was found in any `li` tag
+            agency.append("NA")
+        
+        # Optional delay to avoid overwhelming the server
+        time.sleep(.5)
+
+    except requests.RequestException as e:
+        # Handle request-related errors
+        print(f"Error fetching {url}: {e}")
         agency.append("NA")
 
+# Add the agency information to the DataFrame
+scraped_data_df["agency"] = agency
 
-scraped_data_df["agency"]=agency
-
-print(df.head())
-
-import geopandas as gpd
-#First filter the overall df to include only state actions:
-
-states_actions_df=scraped_data_df[scraped_data_df["Category"]=="State Enforcement Agencies"]
 
 ```
 
+```{python}
+
+```
 
 ### 2. Map by District (PARTNER 2)
 
