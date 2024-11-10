@@ -60,45 +60,46 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 
-# Define the URL
 url = "https://oig.hhs.gov/fraud/enforcement/"
 
-# Send a GET request to the URL
 response = requests.get(url)
 
-# Parse the HTML content with BeautifulSoup
+#parse the HTML content
 soup = BeautifulSoup(response.text, "html.parser")
 
-# Find all h2 tags for enforcement action titles
+#find all h2 tags for enforcement action titles
 tag_h = soup.find_all("h2", class_="usa-card__heading")
 
-# Find all span tags for dates
+#find all span tags for dates
 span_dates = soup.find_all("span", class_="text-base-dark padding-right-105")
 
-# Find all ul tags for categories
+#find all ul tags for categories
 ul_categories = soup.find_all("ul", class_="display-inline add-list-reset")
 
-# Extract text and hyperlinks
+#create empty lists to store our extracted data in
 enforcement = []
 dates = []
 categories = []
 hyperlinks = []
 
+#loop over the objects we created from finding tags
 for h2, span, ul in zip(tag_h, span_dates, ul_categories):
-    # Extract the hyperlink and text from h2
+    #extract the hyperlink and text from h2
     a_tag = h2.find("a")
     if a_tag:
         enforcement.append(a_tag.text.strip())
-        hyperlinks.append(a_tag['href'])  # Extract the hyperlink
+        hyperlinks.append(a_tag['href'])  
+        #extract the hyperlink
     
-    # Extract the date
+    #extract the date and strip whitespace
     dates.append(span.text.strip())
     
-    # Extract the category text
+    #extract the category text
     category_text = [li.text.strip() for li in ul.find_all("li")]
-    categories.append(", ".join(category_text))  # Join multiple categories if present
+    categories.append(", ".join(category_text))  
+    #join multiple categories if present
 
-# Create a DataFrame
+#create the df
 df = pd.DataFrame({
     "Title of Enforcement Action": enforcement,
     "Date": dates,
@@ -106,7 +107,6 @@ df = pd.DataFrame({
     "Hyperlink": hyperlinks
 })
 
-# Display the DataFrame
 print(df)
 ```
 
@@ -118,7 +118,7 @@ import requests
 from bs4 import BeautifulSoup
 
 tag_h = soup.find_all("h2", class_="usa-card__heading")
-
+#get the hyperlinks and store them in a list
 my_links=[]
 for h2 in tag_h:
   links=h2.find_all("a", href=True)
@@ -126,29 +126,32 @@ for h2 in tag_h:
     my_links.append(
       "https://oig.hhs.gov"+link.get("href"))
 
+#create empty list to store all the hyperlinks into
 agency = []
-
+#loop over all the urls in the mylinks list to find the 
+#agency
 for url in my_links:
     response = requests.get(url)
     page_soup = BeautifulSoup(response.text, "html.parser")
     li_tags = page_soup.find_all("li")
     found_agency=False
+    #loop over the li tags that we found
     for li in li_tags:
-        # Find the `span` with the "Agency:" label
+        #find span labels
         label_span = li.find("span", class_="padding-right-2 text-base")
-        # Check if it contains the text "Agency:"
+        #see if text has Agency in it
         if label_span and "Agency:" in label_span.text:
             agency_text = label_span.next_sibling
             if agency_text:
-                agency_name = agency_text.strip() #Remove whitespace
-                agency.append(agency_name)  #Append to the list
+                agency_name = agency_text.strip() #remove #whitespace
+                agency.append(agency_name)  #append to the list
             else:
-                agency.append("NA")  # Append "NA" if agency name is missing
+                agency.append("NA")  #if agency na
             found_agency = True
-            break  # Stop checking other `li` tags if agency is found
+            break  #break if we find the agency
 
     if not found_agency:
-        # Append "NA" if no "Agency:" label was found in any `li` tag
+        #append "NA" if we don't find an agency
         agency.append("NA")
 
 
@@ -172,93 +175,100 @@ print(df.head())
 * b. Create Dynamic Scraper (PARTNER 2)
 
 ```{python}
+#| eval: false
 import pandas as pd
 import requests
 import time
 from bs4 import BeautifulSoup
 
 def scraper_function():
-    # Input date step - confirming correct format
+    #input date step and confirm correct format
     date_input = input("Please enter a year & month (format should be [yyyy-mm]): ")
     try:
         date_obj = pd.to_datetime(date_input)
     except ValueError:
         print("Invalid date format. Please use YYYY-MM format.")
-        return  # Exit the function if the date format is invalid
+        return  #exit the function if the date format is invalid
     
-    # Checking the date is within the given range 
+    #checking the date is within the given range 
     cutoff_date = pd.to_datetime("2013-01-01")
     if date_obj < cutoff_date:
         print("Please enter a date after the cutoff date:", cutoff_date.strftime("%Y-%m"))
-        return  # Exit if the date is before the cutoff
+        return  #exit if the date is before the cutoff
     
-    # Loop over each month from the input date to the current date
-    all_data = []  # Collect data for all months and pages
+    #coop over each month from the input date to the current date
+    all_data = []  #collect data for all months and pages
     for month_date in pd.date_range(start=date_obj, end=pd.to_datetime("today"), freq='MS'):
         formatted_date = month_date.strftime("%Y-%m")
         page_number = 1
         print(f"Scraping data for {formatted_date}...")
 
         while True:
-            # Define the URL with page number
+            #define the URL with page number
             scrape_url = f"https://oig.hhs.gov/fraud/enforcement/?page={page_number}"
             scrape_response = requests.get(scrape_url)
 
             if scrape_response.status_code != 200:
                 print(f"Error fetching page {page_number} for {formatted_date}. Skipping...")
-                break  # Exit the loop if the page is not found or request fails
+                break  #exit the loop if the page is not found #or request fails
 
-            # Parse the HTML content with BeautifulSoup
+            #parse the HTML content with BeautifulSoup
             scrape_soup = BeautifulSoup(scrape_response.text, "html.parser")
 
-            # Find all required elements
+            #find all required elements
             scrape_tag_h = scrape_soup.find_all("h2", class_="usa-card__heading")
             scrape_span_dates = scrape_soup.find_all("span", class_="text-base-dark padding-right-105")
             scrape_ul_categories = scrape_soup.find_all("ul", class_="display-inline add-list-reset")
 
-            # Break if no data is found on the page
+            #break if no data is found on the page
             if not scrape_tag_h:
                 break
 
-            # Extract text and hyperlinks, ensuring each list has a matching entry
+            #extract text and hyperlinks, ensuring each list #has a matching entry
             for h2, span, ul in zip(scrape_tag_h, scrape_span_dates, scrape_ul_categories):
-                # Extract the hyperlink and text from h2
+                #extract the hyperlink and text from h2
                 title = h2.find("a").text.strip() if h2.find("a") else "N/A"
                 hyperlink = "https://oig.hhs.gov" + h2.find("a")['href'] if h2.find("a") else "N/A"
                 
-                # Extract the date
+                #extract the date
                 date_text = span.text.strip() if span else "N/A"
                 latest_date = pd.to_datetime(date_text, errors='coerce')
                 
-                # Check if the latest date is within range and stop if it's before the target date
+                #check if the latest date is within range and stop if it's before the target date
                 if latest_date and latest_date < date_obj:
                     print("Reached date outside range. Stopping early.")
                     scrape_df = pd.DataFrame(all_data, columns=["Title of Enforcement Action", "Date", "Category", "Hyperlink"])
                     scrape_df.to_csv("scraped_data.csv", index=False)
                     print("Data has been saved to 'scraped_data.csv'.")
-                    return  # Stop the function if date is outside range
+                    return  #stop the function if date is 
+                    #outside range
                 
                 # Extract the category text
                 category_text = [li.text.strip() for li in ul.find_all("li")] if ul else ["N/A"]
                 categories = ", ".join(category_text)
 
-                # Append to the all_data list as a tuple
+                #append to the all_data list as a tuple
                 all_data.append((title, date_text, categories, hyperlink))
 
-            # Move to the next page and add a delay
+            #move to the next page and add a delay
             page_number += 1
-            time.sleep(0.5)  # Reduce delay if possible for faster scraping
+            time.sleep(0.5)
 
-    # Save the data at the end of all months
+    #save the data at the end of all months
     scrape_df = pd.DataFrame(all_data, columns=["Title of Enforcement Action", "Date", "Category", "Hyperlink"])
     scrape_df.to_csv("scraped_data.csv", index=False)
     print("Data has been saved to 'scraped_data.csv'.")
 
-# Call the scraper function
 scraper_function()
 ```
 
 * c. Test Partner's Code (PARTNER 1)
+
+```{python}
+#| eval: false
+scraper_function()
+
+```
 
 ```{python}
 scraped_data_df=pd.read_csv("scraped_data.csv")
@@ -306,22 +316,29 @@ enforc_chart.show()
 
 ```{python}
 import altair as alt
-#Create a chart that uses different shapes for "Criminal & Civil"
-#and the State Enforcement Agency. Then use a str detect to #further classify based upon the title of the enforcement action.
 
-alt.Chart(scraped_data_df).transform_filter(
-        (alt.datum.Category == "State Enforcement Agencies") | 
-        (alt.datum.Category == "Criminal and Civil Actions")).mark_line().encode(
+#filter out anything other than state or crim and civil from
+#our category variable. Then color based upon the two 
+#dif categories:
+state_v_crim_plot=alt.Chart(scraped_data_df).transform_filter(
+        (
+            alt.datum.Category == "State Enforcement Agencies") | 
+        (
+            alt.datum.Category == "Criminal and Civil Actions")
+            ).mark_line().encode(
   alt.X("yearmonth(Date):T"),
   alt.Y("count()"),
   color=("Category")
-)
+).properties(
+    title="HHS Actions by Enforcement Level, 2021-Present")
+state_v_crim_plot.show()
 ```
 
 * based on five topics
 
 ```{python}
 import numpy as np
+#filter
 crim_civil_df=scraped_data_df[scraped_data_df["Category"]=="Criminal and Civil Actions"]
 
 #Define a function to determine the topic based on keywords
@@ -338,15 +355,17 @@ def assign_topic(title):
     else:
         return "Other"
 
+#apply the function to the df's enfrocement action, and assign
+#the result to a new column
 crim_civil_df["Topic"] = crim_civil_df["Title of Enforcement Action"].apply(assign_topic)
 
-
-alt.Chart(crim_civil_df).mark_line().encode(
+#plot with the topic being the color of the line
+topic_chart=alt.Chart(crim_civil_df).mark_line().encode(
   alt.X("yearmonth(Date):T"),
   alt.Y("count()"),
   color="Topic"
 ).properties(title="Monthly HHS Criminal & Civil Actions, 2021-Present")
-
+topic_chart.show()
 ```
 
 ## Step 4: Create maps of enforcement activity
@@ -354,73 +373,142 @@ alt.Chart(crim_civil_df).mark_line().encode(
 ### 1. Map by State (PARTNER 1)
 
 ```{python}
+#| eval: false
 #apply the for loop to extract each rows agency:
-first_30=scraped_data_df.head(50)
 import requests
 from bs4 import BeautifulSoup
 import time
 
+agency=[]
 
-
-agency = []
 
 for url in scraped_data_df["Hyperlink"]:
     try:
-        # Measure the time taken for each request
+        #get start time. ultimately will use for sanity check
+        #while it is running.
         request_start_time = time.time()
         
-        # Send a GET request to the URL
+        #get request for each url that is present in hyperlink
+        #column.
         response = requests.get(url)
-        
+        #end time to see how long it takes to get the url
         request_end_time = time.time()
         print(f"Time taken for request to {url}: {request_end_time - request_start_time} seconds")
 
-        # Parse the HTML content
+        #parse the HTML content
         page_soup = BeautifulSoup(response.text, "html.parser")
-        ul_tags=page_soup.find_all("ul")
         
-        for ul in ul_tags:
-          li_tags = ul.find_all("li")
+        #find ul tags that are relevant
+        ul_tags = page_soup.find_all("ul", class_="usa-list usa-list--unstyled margin-y-2")
+        #set a variabl that can tell us if we found an agency
+        #the default will be false.
         found_agency = False
+        for ul in ul_tags:
+            #loop over all the li tags in the ul tags
+            li_tags = ul.find_all("li")
+            
             for li in li_tags:
-               # Measure time taken to check each `li` tag
-               li_start_time = time.time()
-            
-            # Find the span with the "Agency:" label
-              label_span = li.find("span", class_="padding-right-2 text-base")
-            
-            if label_span and "Agency:" in label_span.text:
-                agency_text = label_span.next_sibling
-                if agency_text:
-                    agency_name = agency_text.strip()  # Remove whitespace
-                    agency.append(agency_name)  # Append to the list
-                else:
-                    agency.append("NA")  # Append "NA" if agency name is missing
-                found_agency = True
-                break  # Stop checking other `li` tags if agency is found
-            
-            li_end_time = time.time()
-            print(f"Time taken to check an `li` tag: {li_end_time - li_start_time} seconds")
+                #measure how long its taking to find the li tags
+                li_start_time = time.time()
+                
+                #find the span with the Agency: label 
+                label_span = li.find("span", class_="padding-right-2 text-base")
+                
+                if label_span and "Agency:" in label_span.text:
+                    agency_text = label_span.next_sibling
+                    if agency_text:
+                        agency_name = agency_text.strip()  #remove whitespace
+                        agency.append(agency_name)  
+                        #append to the list
+                    else:
+                        agency.append("NA")  
+                        #append "NA" if agency name is missing.
+                        #change the found agency value to true
+                        #to exit the loop
+                    found_agency = True
+                    break  #stop checking other li tags if agency is found
+                
+                li_end_time = time.time()
+                print(f"Time taken to check an `li` tag: {li_end_time - li_start_time} seconds")
+
+            if found_agency:
+                break  
+            #exit the outer loop once the agency is found
 
         if not found_agency:
-            # Append "NA" if no "Agency:" label was found in any `li` tag
+            #append "NA" if we dont find an agency
             agency.append("NA")
-        
-        # Optional delay to avoid overwhelming the server
+
         time.sleep(.5)
 
     except requests.RequestException as e:
-        # Handle request-related errors
+        #handle request-related errors
         print(f"Error fetching {url}: {e}")
         agency.append("NA")
 
-# Add the agency information to the DataFrame
+#add the agency information to the df
 scraped_data_df["agency"] = agency
-
 
 ```
 
 ```{python}
+import geopandas as gpd
+shp_path = r"C:\\Users\\Mitch\\Documents\\GitHub\\problem-set-5\\cb_2018_us_state_500k.zip"
+
+state_geo_data=gpd.read_file(shp_path)
+
+state_actions_df=scraped_data_df[scraped_data_df["Category"]=="State Enforcement Agencies"]
+
+#clean the agency column so we can extract the state. remove
+#any of the strings that aren't a state:
+state_actions_df["state"] = np.where(
+    state_actions_df["agency"].notnull(),
+    state_actions_df["agency"]
+    .str.replace(r"(State of |State |General|Genera|Inspector|U\.S\.|Attorney|Northern|Eastern|Western|Southern|Office,|Department|of|Justice|District|['’`]s\s*)", "", regex=True)
+    .str.strip(),  #remove any leading or trailing whitespace
+    np.nan  #assign NaN if the agency column is empty
+)
+
+#change a few names since there's some cleaning still to be done
+#and the format should match the geo df for the merge
+state_actions_df["state"] = np.where(
+    state_actions_df["state"].str.contains("California", case=False, na=False),
+    "California",
+    state_actions_df["state"]
+)
+
+state_actions_df["state"] = np.where(
+    state_actions_df["state"].str.contains("Hawai’i", case=False, na=False),
+    "Hawaii",
+    state_actions_df["state"]
+)
+
+state_actions_df["state"] = np.where(
+    state_actions_df["state"].str.contains("Virgin Islands", case=False, na=False),
+    "United States Virgin Islands",
+    state_actions_df["state"]
+)
+
+#now groupby and give us a count for each state in our data
+state_actions_totals_df=state_actions_df.groupby("state").size().reset_index(name="Count")
+#rename the column in geo df to match our state actions df
+state_geo_data = state_geo_data.rename(columns={"NAME": "state"})
+#merge df with gdf
+state_geo_data_totals = state_geo_data.merge(
+    state_actions_totals_df, on="state", how="left")
+
+#fill any states who had no obs in our original df with 0s    
+state_geo_data_totals["Count"] = state_geo_data_totals["Count"].fillna(0)
+
+#plot map, making sure to provide borders to each state,
+#and changing the color scheme so its more clear which states
+#have high values and which have low.
+alt.Chart(state_geo_data_totals).mark_geoshape(
+    stroke="black", strokeWidth=.5).encode(
+    alt.X("geometry"),
+    color=alt.Color("Count",scale=alt.Scale(range=["white","darkblue"]))
+).project("albersUsa"
+).properties(title="Number of HHS State Enforcement Actions by State, 2021-Present")
 
 ```
 
