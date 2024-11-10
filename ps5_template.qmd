@@ -332,7 +332,6 @@ alt.Chart(crim_civil_df).mark_line().encode(
 
 ```{python}
 #apply the for loop to extract each rows agency:
-first_30=scraped_data_df.head(50)
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -394,10 +393,54 @@ for url in scraped_data_df["Hyperlink"]:
 # Add the agency information to the DataFrame
 scraped_data_df["agency"] = agency
 
-
 ```
 
 ```{python}
+import geopandas as gpd
+shp_path = r"C:\\Users\\Mitch\\Documents\\GitHub\\problem-set-5\\cb_2018_us_state_500k.zip"
+
+state_geo_data=gpd.read_file(shp_path)
+
+state_actions_df=scraped_data_df[scraped_data_df["Category"]=="State Enforcement Agencies"]
+#clean the agency column so we can extract the state:
+
+state_actions_df["state"] = np.where(
+    state_actions_df["agency"].notnull(),
+    state_actions_df["agency"]
+    .str.replace(r"(State of |State |General|Genera|Inspector|U\.S\.|Attorney|Northern|Eastern|Western|Southern|Office,|Department|of|Justice|District|['’`]s\s*)", "", regex=True)
+    .str.strip(),  # Remove any leading or trailing whitespace
+    np.nan  # Assign NaN if the agency column is empty
+)
+
+
+state_actions_df["state"] = np.where(
+    state_actions_df["state"].str.contains("California", case=False, na=False),
+    "California",
+    state_actions_df["state"]
+)
+
+state_actions_df["state"] = np.where(
+    state_actions_df["state"].str.contains("Hawai’i", case=False, na=False),
+    "Hawaii",
+    state_actions_df["state"]
+)
+#Change this name since it'll be easier to merge values later
+#for our geo df
+state_actions_df["state"] = np.where(
+    state_actions_df["state"].str.contains("Virgin Islands", case=False, na=False),
+    "United States Virgin Islands",
+    state_actions_df["state"]
+)
+
+
+state_actions_totals_df=state_actions_df.groupby("state").size().reset_index(name="Count")
+
+state_geo_data = state_geo_data.rename(columns={"NAME": "state"})
+
+state_geo_data_totals = state_geo_data.merge(
+    state_actions_totals_df, on="state", how="left")
+
+state_geo_data_totals.plot(column="Count",legend="Count")
 
 ```
 
