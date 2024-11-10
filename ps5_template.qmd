@@ -29,7 +29,7 @@ output:
     - Partner 1 (Mitch Bobbin mbobbin):
     - Partner 2 (Neil Stein neilstein):
 3. Partner 1 will accept the `ps5` and then share the link it creates with their partner. You can only share it with one partner so you will not be able to change it after your partner has accepted. 
-4. "This submission is our work alone and complies with the 30538 integrity policy." Add your initials to indicate your agreement: \*\*\MB\*\* \*\*\NS\*\*
+4. "This submission is our work alone and complies with the 30538 integrity policy." Add your initials to indicate your agreement: \*\*\\MB\*\* \*\*\\NS\*\*
 5. "I have uploaded the names of anyone else other than my partner and I worked with on the problem set **[here](https://docs.google.com/forms/d/185usrCREQaUbvAXpWhChkjghdGgmAZXA3lPWpXLLsts/edit)**"  (1 point)
 6. Late coins used this pset: \*\*\_2(1 a piece)_\*\* Late coins left after submission: \*\*\0\*\*
 7. Knit your `ps5.qmd` to an PDF file to make `ps5.pdf`, 
@@ -236,9 +236,9 @@ def scraper_function():
                 
                 #check if the latest date is within range and stop if it's before the target date
                 if latest_date and latest_date < date_obj:
-                    print("Reached date outside range. Stopping early.")
+                    print("Reached date outside range.")
                     scrape_df = pd.DataFrame(all_data, columns=["Title of Enforcement Action", "Date", "Category", "Hyperlink"])
-                    scrape_df.to_csv("scraped_data.csv", index=False)
+                    scrape_df.to_csv("enforcement_actions_year_month.csv.", index=False)
                     print("Data has been saved to 'scraped_data.csv'.")
                     return  #stop the function if date is 
                     #outside range
@@ -256,13 +256,17 @@ def scraper_function():
 
     #save the data at the end of all months
     scrape_df = pd.DataFrame(all_data, columns=["Title of Enforcement Action", "Date", "Category", "Hyperlink"])
-    scrape_df.to_csv("scraped_data.csv", index=False)
-    print("Data has been saved to 'scraped_data.csv'.")
+    scrape_df.to_csv("enforcement_actions_year_month.csv", index=False)
+    print("Data has been saved to enforcement_actions_year_month.csv.")
 
 scraper_function()
-scrape_2023=pd.read_csv("scraped_data.csv",index=False)
-print(scraped_2023.iloc[-1])
-print(scraped_2023.shape)
+
+```
+
+```{python}
+scrape_2023=pd.read_csv("enforcement_actions_year_month.csv")
+print(scrape_2023.iloc[-1])
+print(scrape_2023.shape)
 ```
 
 The earliest enforcement action is on January 3rd, 2023. Its enforcement title is Podiatrist Pays $90,000 To Settle False Billing Allegations, and its url is https://oig.hhs.gov/fraud/enforcement/podiatrist-pays-90000-to-settle-false-billing-allegations/. It was brought by the US Attorney's Office, Southern District of Texas. There are 1,534 actions we collected into the scraped dataframe.
@@ -275,7 +279,7 @@ scraper_function()
 ```
 
 ```{python}
-scraped_data_df=pd.read_csv("scraped_data.csv")
+scraped_data_df=pd.read_csv("enforcement_actions_year_month.csv")
 print(scraped_data_df.iloc[-1])
 print(scraped_data_df.shape)
 ```
@@ -459,7 +463,12 @@ scraped_data_df["agency"] = agency
 ```{python}
 import geopandas as gpd
 import numpy as np
-
+import pandas as pd
+import altair as alt
+scraped_data_df=pd.read_csv(
+    r"C:\\Users\\Mitch\Documents\\enforcement_actions_year_month.csv")
+#I had adjustments I had to make in our earlier code. For timely #submission I'm pulling this saved csv so I dont have to run
+#a 50 minute loop to get our df as it is needed again.
 state_geo_data= gpd.read_file("cb_2018_us_state_500k.shp")
 
 state_actions_df=scraped_data_df[scraped_data_df["Category"]=="State Enforcement Agencies"]
