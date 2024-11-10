@@ -29,9 +29,9 @@ output:
     - Partner 1 (Mitch Bobbin mbobbin):
     - Partner 2 (Neil Stein neilstein):
 3. Partner 1 will accept the `ps5` and then share the link it creates with their partner. You can only share it with one partner so you will not be able to change it after your partner has accepted. 
-4. "This submission is our work alone and complies with the 30538 integrity policy." Add your initials to indicate your agreement: \*\*\_\_\*\* \*\*\_\_\*\*
+4. "This submission is our work alone and complies with the 30538 integrity policy." Add your initials to indicate your agreement: \*\*\MB\*\* \*\*\NS\*\*
 5. "I have uploaded the names of anyone else other than my partner and I worked with on the problem set **[here](https://docs.google.com/forms/d/185usrCREQaUbvAXpWhChkjghdGgmAZXA3lPWpXLLsts/edit)**"  (1 point)
-6. Late coins used this pset: \*\*\_\_\*\* Late coins left after submission: \*\*\_\_\*\*
+6. Late coins used this pset: \*\*\_2(1 a piece)_\*\* Late coins left after submission: \*\*\0\*\*
 7. Knit your `ps5.qmd` to an PDF file to make `ps5.pdf`, 
     * The PDF should not be more than 25 pages. Use `head()` and re-size figures when appropriate. 
 8. (Partner 1): push  `ps5.qmd` and `ps5.pdf` to your github repo.
@@ -107,7 +107,7 @@ df = pd.DataFrame({
     "Hyperlink": hyperlinks
 })
 
-print(df)
+print(df.head())
 ```
 
   
@@ -262,7 +262,7 @@ def scraper_function():
 scraper_function()
 scrape_2023=pd.read_csv("scraped_data.csv",index=False)
 print(scraped_2023.iloc[-1])
-print(scraped_2023.shape())
+print(scraped_2023.shape)
 ```
 
 The earliest enforcement action is on January 3rd, 2023. Its enforcement title is Podiatrist Pays $90,000 To Settle False Billing Allegations, and its url is https://oig.hhs.gov/fraud/enforcement/podiatrist-pays-90000-to-settle-false-billing-allegations/. It was brought by the US Attorney's Office, Southern District of Texas. There are 1,534 actions we collected into the scraped dataframe.
@@ -277,6 +277,7 @@ scraper_function()
 ```{python}
 scraped_data_df=pd.read_csv("scraped_data.csv")
 print(scraped_data_df.iloc[-1])
+print(scraped_data_df.shape)
 ```
 
 We have 3,022 actions in our final df. Note that this can change by the time we submit the assignment, as the site is updated regularly and I am writing this answer on 11/8/24.
