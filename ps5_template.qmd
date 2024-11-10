@@ -260,8 +260,12 @@ def scraper_function():
     print("Data has been saved to 'scraped_data.csv'.")
 
 scraper_function()
+scrape_2023=pd.read_csv("scraped_data.csv",index=False)
+print(scraped_2023.iloc[-1])
+print(scraped_2023.shape())
 ```
 
+The earliest enforcement action is on January 3rd, 2023. Its enforcement title is Podiatrist Pays $90,000 To Settle False Billing Allegations, and its url is https://oig.hhs.gov/fraud/enforcement/podiatrist-pays-90000-to-settle-false-billing-allegations/. It was brought by the US Attorney's Office, Southern District of Texas. There are 1534 actions we collected into the scraped dataframe.
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
