@@ -88,7 +88,7 @@ for h2, span, ul in zip(tag_h, span_dates, ul_categories):
     a_tag = h2.find("a")
     if a_tag:
         enforcement.append(a_tag.text.strip())
-        hyperlinks.append(a_tag['href'])  
+        hyperlinks.append("https://oig.hhs.gov"+a_tag['href'])  
         #extract the hyperlink
     
     #extract the date and strip whitespace
@@ -265,7 +265,7 @@ print(scraped_2023.iloc[-1])
 print(scraped_2023.shape())
 ```
 
-The earliest enforcement action is on January 3rd, 2023. Its enforcement title is Podiatrist Pays $90,000 To Settle False Billing Allegations, and its url is https://oig.hhs.gov/fraud/enforcement/podiatrist-pays-90000-to-settle-false-billing-allegations/. It was brought by the US Attorney's Office, Southern District of Texas. There are 1534 actions we collected into the scraped dataframe.
+The earliest enforcement action is on January 3rd, 2023. Its enforcement title is Podiatrist Pays $90,000 To Settle False Billing Allegations, and its url is https://oig.hhs.gov/fraud/enforcement/podiatrist-pays-90000-to-settle-false-billing-allegations/. It was brought by the US Attorney's Office, Southern District of Texas. There are 1,534 actions we collected into the scraped dataframe.
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
