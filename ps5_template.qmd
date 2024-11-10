@@ -175,6 +175,7 @@ print(df.head())
 * b. Create Dynamic Scraper (PARTNER 2)
 
 ```{python}
+#| eval: false
 import pandas as pd
 import requests
 import time
@@ -264,7 +265,12 @@ scraper_function()
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
+#| eval: false
 scraper_function()
+
+```
+
+```{python}
 scraped_data_df=pd.read_csv("scraped_data.csv")
 print(scraped_data_df.iloc[-1])
 ```
@@ -365,6 +371,7 @@ topic_chart.show()
 ### 1. Map by State (PARTNER 1)
 
 ```{python}
+#| eval: false
 #apply the for loop to extract each rows agency:
 import requests
 from bs4 import BeautifulSoup
